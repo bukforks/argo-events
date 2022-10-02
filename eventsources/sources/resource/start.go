@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	v1 "k8s.io/api/core/v1"
 	"os"
 	"regexp"
 	"strings"
@@ -119,7 +120,16 @@ func (el *EventListener) StartListening(ctx context.Context, dispatch func([]byt
 	}
 
 	log.Info("setting up informer factory...")
-	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, 0, resourceEventSource.Namespace, tweakListOptions)
+
+	namespace := ""
+	switch resourceEventSource.Namespace {
+	case "*":
+		namespace = v1.NamespaceAll
+	default:
+		namespace = resourceEventSource.Namespace
+	}
+
+	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, 0, namespace, tweakListOptions)
 
 	informer := factory.ForResource(gvr)
 
